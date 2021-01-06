@@ -1,0 +1,53 @@
+.wrap {
+  margin: 20px;
+  padding-bottom: 120px;
+  overflow-y: scroll;
+
+  .wrap-box {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    margin: 20px 0;
+    justify-content: space-between;
+
+    .wrap-every {
+      width: 25%;
+      word-wrap: break-word;
+      word-break: break-all;
+      overflow: hidden;
+      margin: 20px;
+
+      .book-name {
+        font-size: 24px;
+        margin-top: 12px;
+      }
+
+      .book-type {
+        display: inline-block;
+        background-color: lightgray;
+        padding: 2px 12px;
+        border-radius: 32px;
+        font-size: 24px;
+        margin-top: 12px;
+      }
+    }
+
+    .temp {
+      width: 25%;
+      height: 0;
+      margin-bottom: 0;
+      border: none;
+      padding: 0;
+      word-wrap: break-word;
+      word-break: break-all;
+      overflow: hidden;
+      margin: 20px;
+    }
+  }
+
+  .todo-content {
+    display: flex;
+    justify-content: center;
+    margin-top: 50%;
+  }
+}
