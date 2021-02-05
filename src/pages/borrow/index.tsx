@@ -1,6 +1,6 @@
 import { ComponentClass } from 'react'
 import Taro, { Component, Config } from '@tarojs/taro'
-import { View } from '@tarojs/components'
+import { View, ScrollView } from '@tarojs/components'
 import { AtSwipeAction, AtList, AtListItem, AtMessage, AtButton } from 'taro-ui'
 import { connect } from '@tarojs/redux'
 import { autobind } from 'core-decorators'

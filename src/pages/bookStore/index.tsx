@@ -3,7 +3,7 @@ import Taro, { Component, Config } from '@tarojs/taro'
 import { AtTabs, AtTabsPane, AtGrid, AtSearchBar } from 'taro-ui'
 import { connect } from '@tarojs/redux'
 import { autobind } from 'core-decorators'
-import { View, Text } from '@tarojs/components'
+import { View, Text, Image, ScrollView } from '@tarojs/components'
 import { updataState, queryBookList } from '../../actions/bookStore'
 
 import './index.less'
@@ -17,6 +17,8 @@ import './index.less'
 // ref: https://github.com/DefinitelyTyped/DefinitelyTyped/issues/20796
 //
 // #endregion
+
+let ImageLoadList = []
 
 type Book = {
   image: string;
@@ -42,6 +44,9 @@ type PageState = {
   current: number,
   searchValue: string, // 搜索输入框value
   selector: any,
+  imgWidth: number,
+  goodsRight: any,
+  goodsLeft: any,
 }
 
 type IProps = PageStateProps & PageDispatchProps & PageOwnProps
@@ -74,10 +79,27 @@ class Index extends Component {
       current: 0,
       searchValue: '', // 搜索输入框value,
       selector: ['美国', '中国', '巴西', '日本'],
+      imgWidth: 0,
+      goodsLeft: [],
+      goodsRight: [],
     }
   }
   componentWillReceiveProps(nextProps) {
     // console.log(this.props, nextProps)
+  }
+
+  componentWillMount() {
+    Taro.getSystemInfo({
+      success: (res => {
+        let ww = res.windowWidth;
+        let wh = res.windowHeight;
+        let imgWidth = ww * 0.5;
+
+        this.setState({
+          imgWidth
+        })
+      })
+    })
   }
 
   componentDidMount() {
@@ -94,6 +116,7 @@ class Index extends Component {
   componentDidHide() { }
 
   handleClick(tabKey) {
+    ImageLoadList = []
     const { dispatch } = this.props;
     this.setState({
       current: tabKey,
@@ -137,8 +160,71 @@ class Index extends Component {
     }
   }
 
+  onImageLoad = (e) => {
+    const { bookStore } = this.props
+    const { bookList } = bookStore
+    let oImgW = e.detail.width;         //图片原始宽度
+    let oImgH = e.detail.height;        //图片原始高度
+    let imgWidth = this.state.imgWidth;  //图片设置的宽度
+    let scale = imgWidth / oImgW;        //比例计算
+    let imgHeight = oImgH * scale;      //自适应高度
+
+    //初始化ImageLoadList数据
+    ImageLoadList.push({
+      id: parseInt(e.currentTarget.id),
+      height: imgHeight,
+    })
+    //载入全部的图片进入ImageLoadList数组，若数量和bookList中相等，进入图片排序函数
+    if (ImageLoadList.length === bookList.length) {
+      this.handleImageLoad(ImageLoadList)
+    }
+  }
+
+  handleImageLoad = (ImageLoadList) => {
+    const { bookStore } = this.props
+    const { bookList } = bookStore
+    //对无序的列表进行排序
+    for (let i = 0; i < ImageLoadList.length - 1; i++)
+      for (let j = 0; j < ImageLoadList.length - i - 1; j++) {
+        if (ImageLoadList[j].id > ImageLoadList[j + 1].id) {
+          let temp = ImageLoadList[j]
+          ImageLoadList[j] = ImageLoadList[j + 1]
+          ImageLoadList[j + 1] = temp
+        }
+      }
+
+    for (let i = 0; i < bookList.length; i++) {
+      ImageLoadList[i].book_img = bookList[i].book_img
+      ImageLoadList[i].book_name = bookList[i].book_name
+      ImageLoadList[i].book_type = bookList[i].book_type
+      ImageLoadList[i].imgStyle = { height: ImageLoadList[i].height + 'rpx' }
+
+    }
+    //对现在的列表进行操作
+    let leftHeight = 0;
+    let rightHeight = 0;
+    let left = []
+    let right = []
+    //遍历数组
+    for (let i = 0; i < ImageLoadList.length; i++) {
+      if (leftHeight <= rightHeight) {
+        left.push(ImageLoadList[i])
+        leftHeight += ImageLoadList[i].height
+      } else {
+        right.push(ImageLoadList[i])
+        rightHeight += ImageLoadList[i].height
+      }
+    }
+    this.setState({
+      goodsRight: right,
+      goodsLeft: left
+    }, () => {
+      console.log(this.state);
+    })
+  }
+
   renderBookList() {
-    const { searchValue } = this.state
+    const { goodsRight, goodsLeft, searchValue } = this.state
     const { bookStore } = this.props
     const { bookList } = bookStore
     return (
@@ -151,25 +237,54 @@ class Index extends Component {
           onChange={this.handleSearchChange}
           onActionClick={this.handleSearch}
         /> */}
-        <View className="wrap-box">
-          {bookList.map((item, index) => (
-            <View className="wrap-every" onClick={this.goToHaveBorrow.bind(this, item)}>
-              <View>
-                <image
-                  style="width: 80px; height: 80px; border-radius: 10px;"
-                  src="{{item.book_img}}" />
-              </View>
-              <View className="book-name">{item.book_name}</View>
-              <Text className="book-type" >{item.book_type}</Text>
-            </View>
-          ))}
-          <View className="temp" v-for="i in 3"></View>
+        <View style={{ display: 'none' }}>
+          {
+            bookList.map((item, index) => {
+              return (
+                <Image onLoad={this.onImageLoad} id={index} src={item.book_img}></Image>
+              )
+            })
+          }
         </View>
+        <ScrollView>
+          {
+            <View className="book-left">
+              {goodsLeft.map((item, index) => (
+                <View className="book-item" onClick={this.goToHaveBorrow.bind(this, item)}>
+                  <View>
+                    <Image src={item.book_img} className="book-img" style={item.imgStyle} id={index}
+                      mode='widthFix' />
+                  </View>
+                  <View className="book-name">{item.book_name}</View>
+                  <View className="book-type" >{item.book_type}</View>
+                </View>
+              ))}
+              <View className="temp" v-for="i in 3"></View>
+            </View>
+          }
+        </ScrollView>
+        <ScrollView>
+          {
+            <View className="book-right">
+              {goodsRight.map((item, index) => (
+                <View className="book-item" onClick={this.goToHaveBorrow.bind(this, item)}>
+                  <View>
+                    <Image src={item.book_img} className="book-img" style={item.imgStyle} id={index}
+                      mode='widthFix' />
+                  </View>
+                  <View className="book-name">{item.book_name}</View>
+                  <View className="book-type" >{item.book_type}</View>
+                </View>
+              ))}
+              <View className="temp" v-for="i in 3"></View>
+            </View>
+          }
+        </ScrollView>
       </View>)
   }
 
   renderHaveBookList() {
-    const { searchValue } = this.state
+    const { goodsRight, goodsLeft, searchValue } = this.state
     const { bookStore } = this.props
     const { bookList } = bookStore
     return (
@@ -182,26 +297,55 @@ class Index extends Component {
           onChange={this.handleSearchChange}
           onActionClick={this.handleSearch}
         /> */}
-        <View className="wrap-box">
-          {bookList.map((item, index) => (
-            <View className="wrap-every">
-              <View>
-                <image
-                  style="width: 80px; height: 80px; border-radius: 10px;"
-                  src="{{item.book_img}}" />
-              </View>
-              <View className="book-name">{item.book_name}</View>
-              <Text className="book-type" >{item.book_type}</Text>
-            </View>
-          ))}
-          <View className="temp" v-for="i in 3"></View>
+        <View style={{ display: 'none' }}>
+          {
+            bookList.map((item, index) => {
+              return (
+                <Image onLoad={this.onImageLoad} id={index} src={item.book_img}></Image>
+              )
+            })
+          }
         </View>
+        <ScrollView>
+          {
+            <View className="book-left">
+              {goodsLeft.map((item, index) => (
+                <View className="book-item">
+                  <View>
+                    <Image src={item.book_img} className="book-img" style={item.imgStyle} id={index}
+                      mode='widthFix' />
+                  </View>
+                  <View className="book-name">{item.book_name}</View>
+                  <View className="book-type" >{item.book_type}</View>
+                </View>
+              ))}
+              <View className="temp" v-for="i in 3"></View>
+            </View>
+          }
+        </ScrollView>
+        <ScrollView>
+          {
+            <View className="book-right">
+              {goodsRight.map((item, index) => (
+                <View className="book-item">
+                  <View>
+                    <Image src={item.book_img} className="book-img" style={item.imgStyle} id={index}
+                      mode='widthFix' />
+                  </View>
+                  <View className="book-name">{item.book_name}</View>
+                  <View className="book-type" >{item.book_type}</View>
+                </View>
+              ))}
+              <View className="temp" v-for="i in 3"></View>
+            </View>
+          }
+        </ScrollView>
       </View>)
   }
 
   renderMostBookList() {
     return (
-      <View className="wrap">
+      <View className="wrap-wait">
         <Text className="todo-content">敬请期待...</Text>
       </View>)
   }
