@@ -192,11 +192,13 @@ class Index extends Component {
           ImageLoadList[j + 1] = temp
         }
       }
-
     for (let i = 0; i < bookList.length; i++) {
       ImageLoadList[i].book_img = bookList[i].book_img
       ImageLoadList[i].book_name = bookList[i].book_name
       ImageLoadList[i].book_type = bookList[i].book_type
+      ImageLoadList[i].content = bookList[i].content
+      ImageLoadList[i].book_isbn = bookList[i].book_isbn
+      ImageLoadList[i].id = bookList[i].id
       ImageLoadList[i].imgStyle = { height: ImageLoadList[i].height + 'rpx' }
 
     }

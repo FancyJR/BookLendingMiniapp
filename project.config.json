@@ -4,7 +4,7 @@
   "description": "一款基于 Taro.js 的多端运行小程序。支持图书借阅、查询、评论等功能",
   "appid": "wxb2828554b4c4e7dd",
   "setting": {
-    "urlCheck": true,
+    "urlCheck": false,
     "es6": true,
     "enhance": true,
     "postcss": false,
