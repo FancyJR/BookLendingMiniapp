@@ -170,10 +170,12 @@ class Index extends Component {
     let imgHeight = oImgH * scale;      //自适应高度
 
     //初始化ImageLoadList数据
-    ImageLoadList.push({
-      id: parseInt(e.currentTarget.id),
-      height: imgHeight,
-    })
+    if (ImageLoadList.length < bookList.length) {
+      ImageLoadList.push({
+        id: parseInt(e.currentTarget.id),
+        height: imgHeight,
+      })
+    }
     //载入全部的图片进入ImageLoadList数组，若数量和bookList中相等，进入图片排序函数
     if (ImageLoadList.length === bookList.length) {
       this.handleImageLoad(ImageLoadList)
